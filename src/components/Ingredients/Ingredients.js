@@ -1,15 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import IngredientForm from "./IngredientForm";
 import Search from "./Search";
 import IngredientList from "./IngredientList";
 
 function Ingredients() {
   const [userIngredients, setUserIngredients] = useState([]);
+
+  const filteredIngredientsHandler = useCallback((filteredIngredients) => {
+    setUserIngredients(filteredIngredients);
+  }, []);
+
   const addIngredientHandler = (ingredient) => {
-    setUserIngredients((prevIngredient) => [
-      ...prevIngredient,
-      { id: Math.random().toString(), ...ingredient },
-    ]);
+    fetch(
+      "https://react-hooks-3cb18-default-rtdb.firebaseio.com/ingredients.json",
+      {
+        method: "POST",
+        body: JSON.stringify(ingredient),
+        headers: { "Content-Type": "application/json" },
+      }
+    )
+      .then((response) => {
+        return response.json();
+      })
+      .then((responseData) => {
+        setUserIngredients((prevIngredient) => [
+          ...prevIngredient,
+          { id: responseData.name, ...ingredient },
+        ]);
+      });
   };
 
   const removeIngredientHandler = (id) => {
@@ -23,8 +41,11 @@ function Ingredients() {
       <IngredientForm onAddIngredient={addIngredientHandler} />
 
       <section>
-        <Search />
-        <IngredientList ingredients={userIngredients} onRemoveItem={removeIngredientHandler} />
+        <Search onLoadIngredients={filteredIngredientsHandler} />
+        <IngredientList
+          ingredients={userIngredients}
+          onRemoveItem={removeIngredientHandler}
+        />
       </section>
     </div>
   );
